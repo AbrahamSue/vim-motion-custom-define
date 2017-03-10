@@ -18,12 +18,12 @@ vim-motion-fcharchar :fire:
 ## Usaage
 ```
 nnoremap s <Plug>(motion-fcharchar-fwd)
-nnoremap S <Plug>(motion-fcharchar-fwd)
+nnoremap S <Plug>(motion-fcharchar-bkw)
 ```
 
 
-| Key                     | Description                      |
-| :---                    | :---                             |
+| Key                         | Description                        |
+| :---------------------------| :----------------------------------|
 | [count]f\<char\>\<timeout\> | like original vim f\<char\> motion |
 | [count]f\<char\>\<ESC\>     | like original vim f\<char\> motion |
 | [count]f\<char\>\<char\>    | cursor motion jump to the first \<char\>\<char\> locaiton, the fisrt char is inclusiave, the second is exclusive |
