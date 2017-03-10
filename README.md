@@ -10,32 +10,38 @@ vim-motion-fcharchar :fire:
 
   * Support *visual mode* motion
   * Support *operator-pending* mode motion
-  * Support repeat ;, and work well with f/F/t/T repeator
+  * Support repeat **;,** and work well with f/F/t/T repeator
 
 ###  Demo:
    
 
 ## Usaage
+```
+nnoremap s <Plug>(motion-fcharchar-fwd)
+nnoremap S <Plug>(motion-fcharchar-fwd)
+```
 
-> nnoremap s <Plug>(motion-fcharchar-fwd)
-> nnoremap S <Plug>(motion-fcharchar-fwd)
 
-| Key                        | Description                      |
-| :---                       | ---:                             |
-| > [count] f<char><timeout> | like original vim f<char> motion |
-| > [count] f<char><ESC>     | like original vim f<char> motion |
-| > [count] f<char><char>    | cursor motion jump to the first <char><char> locaiton, the fisrt char is inclusiave, the second is exclusive |
+| Key                     | Description                      |
+| :---                    | :---                             |
+| [count]f<char><timeout> | like original vim f<char> motion |
+| [count]f<char><ESC>     | like original vim f<char> motion |
+| [count]f<char><char>    | cursor motion jump to the first <char><char> locaiton, the fisrt char is inclusiave, the second is exclusive |
 
 ## Installation
 
 ### [vim plug](https://github.com/junegunn/vim-plug)
-> Plug 'AbrahamSue/vim-motion-fcharchar'
-> PlugInstall
+```
+Plug 'AbrahamSue/vim-motion-fcharchar'
+PlugInstall
+```
 
 
 ### [Vundle](https://github.com/VundleVim/Vundle.vim)
-> Plugin 'AbrahamSue/vim-motion-fcharchar'
-> PluginInstall
+```
+Plugin 'AbrahamSue/vim-motion-fcharchar'
+PluginInstall
+```
 
 ### Manual
 ```
