@@ -6,7 +6,7 @@ vim-motion-fcharchar :fire:
 ## Introduction
   This is vim plugin project that provides a in one line search and jump motion, like f but accepts up to two characters. There are several existing vim plugin that support a montion with 2 or more characters, e.g. vim-easymotion, vim-sneak, and vim-seek. Easymotion and sneak are cross line boundry motion, while vim-seek works within current line. 
 
-  Cross line motion has a different application scenario, I personally keep easymotion-s2 on \<Leader\>s, which is very useful. Current line two characters montion will be more quick and column move focused. I was using vim-seek on my key 's/S', but it doesn't support visual mode and operator-pending mode, and doesn't work with ';,' repeator so far. So I wrote this plugin.
+  Cross line motion has a different application scenario, I personally keep easymotion-s2 on \<Leader\>s, which is very useful. Current line two characters montion will be more quick and column move focused. 
 
   * Support *visual mode* motion
   * Support *operator-pending* mode motion
@@ -54,6 +54,8 @@ git clone https://github.com/AbrahamSue/vim-motion-fcharchar
 * https://github.com/easymotion/vim-easymotion
 * https://github.com/justinmk/vim-sneak
 * https://github.com/goldfeld/vim-seek
+* https://github.com/rhysd/clever-f.vim
+* https://github.com/t9md/vim-smalls
 * https://github.com/junegunn/vim-plug
 * https://github.com/VundleVim/Vundle.vim
 
