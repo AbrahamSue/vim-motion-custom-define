@@ -23,7 +23,6 @@ let s:config = {
   \ 'mode' : { 'v': 'gv', 'V': 'gv',  '': 'gv', 'n': ' ', 'o': ' ' },
   \ 'posmark' : {'v': "'>", 'V': "'>",  '': "'>", 'n': ".", 'o': "." } 
   \}
-" fu! GetPosV() | execute 'normal! ' | let l:pos = col('.') - 1 | execute 'normal! gv' | return l:pos | endf
 fu! s:readchar(...)
   if ! a:0 | return getchar() | endif
   let l:max = a:1 | let l:ts0 = reltime() | let l:elapsed = 0
@@ -42,12 +41,7 @@ fu! s:motion(mode, direction, count, ...)
   let l:pos = col(l:posmark) - 1
   let l:c1 = 0
   let l:c2 = 0
-"   let l:cpos = getcurpos()
-"    echom 'delta=' . l:delta . 'fc=' . l:fc . ' mc=' . l:mc . ' findex=' . l:findex . ' posmark=' . l:posmark . 
-"      \' count=' . a:count . ' mode=' . a:mode .
-"      \' visualmode=' . visualmode() . ' prefix=' .  l:prefix .
-"      \' pos=' . l:pos . ' virtcol=' . virtcol('.') . ' getcurpos=[' .  l:cpos[1] . ',' . l:cpos[2] . 'lmode()]'
-  echom l:delta .' '. l:fc .' '. l:mc .' '. l:findex . ' '. l:posmark . ' ' . l:prefix
+"  echom l:delta .' '. l:fc .' '. l:mc .' '. l:findex . ' '. l:posmark . ' ' . l:prefix
   if a:0 > 0 
     let l:la = strlen(a:1)
     if l:la > 0 | let l:c1 = char2nr(strpart(a:1, 0, 1)) | endif
@@ -80,15 +74,6 @@ fu! s:motion(mode, direction, count, ...)
   if l:idx >= 0
     let l:idx = ( l:idx - l:pos ) * l:delta + l:delta
     if l:idx > 0 | execute l:prefix . l:idx . l:mc | endif
-    " if l:idx > l:pos
-    "   let l:idx -= l:pos
-    "   let l:idx += 1
-    "   execute l:prefix . l:idx . l:mc
-    " elseif l:idx < l:pos
-    "   let l:pos -= l:idx
-    "   let l:pos -= 1
-    "   execute l:prefix . l:pos . l:mc
-    " endif
   endif
 
   return
