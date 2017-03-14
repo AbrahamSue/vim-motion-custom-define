@@ -7,7 +7,7 @@
 " TDB: 2. How to get real mode in function
 " New feature: Add operator define support
 
-if exists("s:loaded_fcharchar") || &cp || v:version < 700
+if exists("g:loaded_fcharchar") || &cp || v:version < 700
 	  finish
 endif
 let g:loaded_fcharchar = 1
