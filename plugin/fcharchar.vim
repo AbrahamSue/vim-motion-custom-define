@@ -8,7 +8,7 @@
 " New feature: Add operator define support
 
 if exists("g:loaded_fcharchar") || &cp || v:version < 700
-	  finish
+  finish
 endif
 let g:loaded_fcharchar = 1
 
@@ -16,6 +16,8 @@ let s:motionsaved_exist=0
 let s:motionsaved_mode=''
 let s:motionsaved_dir=0
 let s:motionsaved_count=1
+let s:motionsaved_keys=''
+let s:motion_last_run_timestamp=reltime()
 let s:config = {
   \ 'dir': [
       \ [  1, 'f', 'l', 'stridx'  ],
@@ -29,12 +31,29 @@ fu! s:readchar(...)
   let l:max = a:1 | let l:ts0 = reltime() | let l:elapsed = 0
   while l:elapsed < l:max
     if getchar(1)|return getchar()|endif
-    sleep 50 m
+    sleep 10m
     let l:elapsed = str2float(reltimestr(reltime(l:ts0)))
   endwhile
   return 27
 endf
-fu! s:motion(mode, direction, count, ...)
+" str2float(reltimestr(reltime(reltime()))) =5.0e-6
+fu! s:fmotion_rbs(mode, direction, count, ...)
+  let l:elapsed = str2float(reltimestr(reltime(s:motion_last_run_timestamp)))
+  let l:msg = ''
+  if l:elapsed > g:fcharchar_timeout
+    let l:msg = 'Real motion'
+    " debug call('s:fmotion', a:000)
+    call s:fmotion(a:mode, a:direction, a:count)
+  elseif xor(a:direction, s:motionsaved_dir)
+    let l:msg = 'reversed replay'
+    call s:replay(',')
+  else
+    let l:msg = 'normal replay'
+    call s:replay(';')
+  endif
+  " echom printf("l:elapsed = %.6f g:fcharchar_timeout = %.6f, '%s' '%s'", l:elapsed, g:fcharchar_timeout, s:motionsaved_keys, l:msg)
+endf
+fu! s:fmotion(mode, direction, count, ...)
   if !has_key(s:config.mode, a:mode) | return | endif
   let l:prefix = 'normal! ' . s:config.mode[a:mode]
   let [ l:delta, l:fc, l:mc, l:findex] = s:config.dir[!!a:direction]
@@ -49,10 +68,9 @@ fu! s:motion(mode, direction, count, ...)
     if l:la > 1 | let l:c2 = char2nr(strpart(a:1, 1, 1)) | endif
 "    echom 'dir=' . a:direction . ' a:1=' . a:1 . ' a:0=' . a:0 . ' l:c1=' . l:c1 . ' l:c2=' . l:c2
   endif
-  let l:timeout = exists("g:fcharchar_timeout")?(g:fcharchar_timeout):1
   if l:c1 == 0  | let l:c1 = s:readchar() | endif
   if l:c1 == 27 | return | endif
-  if l:c2 == 0  | let l:c2 = s:readchar(l:timeout) | endif
+  if l:c2 == 0  | let l:c2 = s:readchar(g:fcharchar_timeout) | endif
   if l:c2 == 27 | execute l:prefix . a:count . l:fc . nr2char(l:c1) | return | endif
   let l:target = nr2char(l:c1) . nr2char(l:c2)
   if a:0 == 0
@@ -76,7 +94,15 @@ fu! s:motion(mode, direction, count, ...)
     let l:idx = ( l:idx - l:pos ) * l:delta + l:delta
     if l:idx > 0 | execute l:prefix . l:idx . l:mc | endif
   endif
+  let s:motion_last_run_timestamp = reltime()
 
+  "Feature: use the same f key to jump next, F jump prev
+  " let l:c3 = s:readchar(l:timeout)
+  " if l:c3 == char2nr(s:fcharchar_nr)
+  "   s:replay(";")
+  " elseif l:c3 == char2nr(s:fcharchar_nr2)
+  "   s:replay(",")
+  " endif
   return
 endf
 fu! s:record(action)
@@ -88,25 +114,58 @@ fu! s:record(action)
 endf
 fu! s:replay(action)
   if s:motionsaved_exist > 0
-    call s:motion(s:motionsaved_mode, (a:action == ',')?(!s:motionsaved_dir):(s:motionsaved_dir), s:motionsaved_count, s:motionsaved_keys)
+    call s:fmotion(s:motionsaved_mode, (a:action == ',')?(!s:motionsaved_dir):(s:motionsaved_dir), s:motionsaved_count, s:motionsaved_keys)
   else
      execute 'normal! ' . a:action
   endif
 endf
-nnoremap <silent> s :<C-u>call <SID>motion('n', 0, v:count1)<cr>
-onoremap <silent> s :<C-u>call <SID>motion('o', 0, v:count1)<cr>
-vnoremap <silent> s :<C-u>call <SID>motion(visualmode(), 0, v:count1)<cr>
-nnoremap <silent> S :<C-u>call <SID>motion('n', 1, v:count1)<cr>
-onoremap <silent> S :<C-u>call <SID>motion('o', 1, v:count1)<cr>
-vnoremap <silent> S :<C-u>call <SID>motion(visualmode(), 1, v:count1)<cr>
+" define several global variables, to control this plugin's behavior
+let g:fcharchar_visual = 1
+let g:fcharchar_repeat_by_self = 1
 
+if !exists('g:fcharchar_key')
+  let g:fcharchar_key = 'f'
+endif
+if !exists('g:fcharchar_key2')
+  let g:fcharchar_key2 = toupper( g:fcharchar_key )
+endif
+if !exists('g:fcharchar_timeout')
+  let g:fcharchar_timeout = 2.0e0
+endif
+let s:fcharchar_nr=char2nr(g:fcharchar_key)
+let s:fcharchar_nr2=char2nr(g:fcharchar_key2)
 
+if tolower(g:fcharchar_key) != 'f'
+  nnoremap <silent> f :<C-u>call <SID>record('f')<cr>
+  nnoremap <silent> F :<C-u>call <SID>record('F')<cr>
+endif
 nnoremap <silent> t :<C-u>call <SID>record('t')<cr>
 nnoremap <silent> T :<C-u>call <SID>record('T')<cr>
-nnoremap <silent> f :<C-u>call <SID>record('f')<cr>
-nnoremap <silent> F :<C-u>call <SID>record('F')<cr>
-nnoremap <silent> ; :<C-u>call <SID>replay(';')<cr>
-nnoremap <silent> , :<C-u>call <SID>replay(',')<cr>
+if exists('g:fcharchar_repeat_by_self') && g:fcharchar_repeat_by_self
+  let s:motion__func_suffix = '_rbs'
+  " disable these lines, as f<cr> will reduce response on f command
+  " change to <cr>f/F/t/T
+  execute 'noremap <silent> <cr>'.g:fcharchar_key. ' :<C-u>call <SID>replay(";")<cr>'
+  execute 'noremap <silent> <cr>'.g:fcharchar_key2.' :<C-u>call <SID>replay(",")<cr>'
+  noremap <silent> <cr>t :<C-u>call <SID>replay(";")<cr>'
+  noremap <silent> <cr>T :<C-u>call <SID>replay(",")<cr>'
+else
+  let s:motion__func_suffix = ''
+
+  nnoremap <silent> ; :<C-u>call <SID>replay(';')<cr>
+  nnoremap <silent> , :<C-u>call <SID>replay(',')<cr>
+endif
+
+execute 'nnoremap <silent> '.g:fcharchar_key.'  :<C-u>call <SID>fmotion'.s:motion__func_suffix.'("n", 0, v:count1)<cr>'
+execute 'onoremap <silent> '.g:fcharchar_key.'  :<C-u>call <SID>fmotion'.s:motion__func_suffix.'("o", 0, v:count1)<cr>'
+execute 'vnoremap <silent> '.g:fcharchar_key.'  :<C-u>call <SID>fmotion'.s:motion__func_suffix.'(visualmode(), 0, v:count1)<cr>'
+execute 'nnoremap <silent> '.g:fcharchar_key2.' :<C-u>call <SID>fmotion'.s:motion__func_suffix.'("n", 1, v:count1)<cr>'
+execute 'onoremap <silent> '.g:fcharchar_key2.' :<C-u>call <SID>fmotion'.s:motion__func_suffix.'("o", 1, v:count1)<cr>'
+execute 'vnoremap <silent> '.g:fcharchar_key2.' :<C-u>call <SID>fmotion'.s:motion__func_suffix.'(visualmode(), 1, v:count1)<cr>'
+
+
+
+
 
 " operator map feature " {{{1
 " Self define operators helping functions, like y/d/c key
