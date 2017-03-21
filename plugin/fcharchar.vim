@@ -69,11 +69,22 @@ fu! s:fmotion(mode, direction, count, ...)
     if l:la > 1 | let l:c2 = char2nr(strpart(a:1, 1, 1)) | endif
 "    echom 'dir=' . a:direction . ' a:1=' . a:1 . ' a:0=' . a:0 . ' l:c1=' . l:c1 . ' l:c2=' . l:c2
   endif
+
+  let l:line = getline('.')
+  let l:pp = l:pos + 2 * l:delta - 1
   if l:c1 == 0  | let l:c1 = s:readchar() | endif
-  if l:c1 == 27 | return | endif
+  if l:c1 == 27 | return | else | let l:c1 = nr2char(l:c1) | endif
+
+  " l:c1num = strlen(substitute(l:line, '[^'.l:c1.']', '', 'g'))
+  let l:c1num = len( split( l:line, l:c1, 1 ) ) - 1
+  if l:c1num == 1
+    let l:idx = stridx( l:line, l:c1, 0 )
+    if l:idx >= 0| execute l:prefix . (1+l:idx) . '|' | return | endif
+  endif
+
   if l:c2 == 0  | let l:c2 = s:readchar(s:fcharchar_timeout_2ndchar) | endif
-  if l:c2 == 27 | execute l:prefix . a:count . l:fc . nr2char(l:c1) | return | endif
-  let l:target = nr2char(l:c1) . nr2char(l:c2)
+  if l:c2 == 27 | execute l:prefix . a:count . l:fc . l:c1 | return | endif
+  let l:target = l:c1 . nr2char(l:c2)
   if a:0 == 0
     let s:motionsaved_exist=1
     let s:motionsaved_mode=a:mode
@@ -83,8 +94,6 @@ fu! s:fmotion(mode, direction, count, ...)
   endif
 
   let l:i = 0
-  let l:pp = l:pos + 2 * l:delta - 1
-  let l:line = getline('.')
   while l:i < a:count
     let l:idx = function(l:findex)( l:line, l:target, l:pp )
     if l:idx < 0 | break | endif
@@ -133,15 +142,18 @@ endif
 if !exists('g:fcharchar_timeout')
   let s:fcharchar_timeout_repeat  = 4.0
   let s:fcharchar_timeout_2ndchar = 2.0
-elseif type(g:fcharchar_timeout) == 1
-  let s:fcharchar_timeout_repeat  = g:fcharchar_timeout
-  let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout
 elseif type(g:fcharchar_timeout) == 3
   let s:fcharchar_timeout_repeat  = g:fcharchar_timeout[0]
   let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout[1]
 elseif type(g:fcharchar_timeout) == 4
   let s:fcharchar_timeout_repeat  = g:fcharchar_timeout["repeat"]
   let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout["2ndchar"]
+" elseif type(g:fcharchar_timeout) == 5
+"   let s:fcharchar_timeout_repeat  = g:fcharchar_timeout
+"   let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout
+else
+  let s:fcharchar_timeout_repeat  = g:fcharchar_timeout
+  let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout
 endif
 
 let s:fcharchar_nr=char2nr(g:fcharchar_key)
