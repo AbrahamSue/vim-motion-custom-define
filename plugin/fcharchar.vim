@@ -27,6 +27,7 @@ let s:config = {
   \ 'posmark' : {'v': "'>", 'V': "'>",  '': "'>", 'n': ".", 'o': "." }
   \}
 fu! s:readchar(...)
+  " echom "Calling readchar ".join(a:000,',')
   if ! a:0 | return getchar() | endif
   let l:max = a:1 | let l:ts0 = reltime() | let l:elapsed = 0
   while l:elapsed < l:max
@@ -82,7 +83,7 @@ fu! s:fmotion(mode, direction, count, ...)
   endif
 
   let l:i = 0
-  let l:pp = l:pos + l:delta - 1
+  let l:pp = l:pos + 2 * l:delta - 1
   let l:line = getline('.')
   while l:i < a:count
     let l:idx = function(l:findex)( l:line, l:target, l:pp )
@@ -91,7 +92,7 @@ fu! s:fmotion(mode, direction, count, ...)
     let l:pp = l:idx + l:delta
   endwhile
   if l:idx >= 0
-    let l:idx = ( l:idx - l:pos ) * l:delta + l:delta
+    let l:idx = ( l:idx - l:pos ) * l:delta
     if l:idx > 0 | execute l:prefix . l:idx . l:mc | endif
   endif
   let s:motion_last_run_timestamp = reltime()
@@ -116,12 +117,12 @@ fu! s:replay(action)
   if s:motionsaved_exist > 0
     call s:fmotion(s:motionsaved_mode, (a:action == ',')?(!s:motionsaved_dir):(s:motionsaved_dir), s:motionsaved_count, s:motionsaved_keys)
   else
-     execute 'normal! ' . a:action
+     execute printf(":normal! %s", a:action)
   endif
 endf
 " define several global variables, to control this plugin's behavior
 let g:fcharchar_visual = 1
-let g:fcharchar_repeat_by_self = 1
+" let g:fcharchar_repeat_by_self = 1
 
 if !exists('g:fcharchar_key')
   let g:fcharchar_key = 'f'
@@ -130,7 +131,7 @@ if !exists('g:fcharchar_key2')
   let g:fcharchar_key2 = toupper( g:fcharchar_key )
 endif
 if !exists('g:fcharchar_timeout')
-  let g:fcharchar_timeout = 2.0e0
+  let g:fcharchar_timeout = 2.0
 endif
 let s:fcharchar_nr=char2nr(g:fcharchar_key)
 let s:fcharchar_nr2=char2nr(g:fcharchar_key2)
@@ -213,6 +214,7 @@ function! s:operator_param_motion(motion_wise, ...)
   " execute printf(fmt, @@)
   let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
   let l:cmd = substitute(l:cmd, "<SEL>", escape(@@, '''\\"'), "g")
+  echom l:cmd
   execute l:cmd
   let &selection = sel_save | let @@ = reg_save
 endfunction
@@ -284,9 +286,9 @@ function! s:operator_function_map(keyseq, ...)  "{{{2
 endfunction
 "}}}
 
-command! -nargs=+ -complete=command OperatorMap             call s:operator_map(<f-args>)
-command! -nargs=+ -complete=command OperatorRangeCommandMap call s:operator_range_command_map(<f-args>)
-command! -nargs=+ -complete=command OperatorFunctionMap     call s:operator_function_map(<f-args>)
+command! -bang -nargs=+ -complete=command OperatorMap             call s:operator_map(<f-args>)
+command! -bang -nargs=+ -complete=command OperatorRangeCommandMap call s:operator_range_command_map(<f-args>)
+command! -bang -nargs=+ -complete=command OperatorFunctionMap     call s:operator_function_map(<f-args>)
 "no need escape space, edit will take all string after it
 " OperatorMap <Leader>o :edit <SEL>
 " OperatorMap <Leader>h :help! <SEL> | echom "<SEL>"
