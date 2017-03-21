@@ -41,7 +41,7 @@ endf
 fu! s:fmotion_rbs(mode, direction, count, ...)
   let l:elapsed = str2float(reltimestr(reltime(s:motion_last_run_timestamp)))
   let l:msg = ''
-  if l:elapsed > g:fcharchar_timeout
+  if l:elapsed > s:fcharchar_timeout_repeat
     let l:msg = 'Real motion'
     " debug call('s:fmotion', a:000)
     call s:fmotion(a:mode, a:direction, a:count)
@@ -52,7 +52,7 @@ fu! s:fmotion_rbs(mode, direction, count, ...)
     let l:msg = 'normal replay'
     call s:replay(';')
   endif
-  " echom printf("l:elapsed = %.6f g:fcharchar_timeout = %.6f, '%s' '%s'", l:elapsed, g:fcharchar_timeout, s:motionsaved_keys, l:msg)
+  " echom printf("l:elapsed = %.6f s:fcharchar_timeout_repeat = %.6f, '%s' '%s'", l:elapsed, s:fcharchar_timeout_repeat, s:motionsaved_keys, l:msg)
 endf
 fu! s:fmotion(mode, direction, count, ...)
   if !has_key(s:config.mode, a:mode) | return | endif
@@ -71,7 +71,7 @@ fu! s:fmotion(mode, direction, count, ...)
   endif
   if l:c1 == 0  | let l:c1 = s:readchar() | endif
   if l:c1 == 27 | return | endif
-  if l:c2 == 0  | let l:c2 = s:readchar(g:fcharchar_timeout) | endif
+  if l:c2 == 0  | let l:c2 = s:readchar(s:fcharchar_timeout_2ndchar) | endif
   if l:c2 == 27 | execute l:prefix . a:count . l:fc . nr2char(l:c1) | return | endif
   let l:target = nr2char(l:c1) . nr2char(l:c2)
   if a:0 == 0
@@ -131,8 +131,19 @@ if !exists('g:fcharchar_key2')
   let g:fcharchar_key2 = toupper( g:fcharchar_key )
 endif
 if !exists('g:fcharchar_timeout')
-  let g:fcharchar_timeout = 2.0
+  let s:fcharchar_timeout_repeat  = 4.0
+  let s:fcharchar_timeout_2ndchar = 2.0
+elseif type(g:fcharchar_timeout) == 1
+  let s:fcharchar_timeout_repeat  = g:fcharchar_timeout
+  let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout
+elseif type(g:fcharchar_timeout) == 3
+  let s:fcharchar_timeout_repeat  = g:fcharchar_timeout[0]
+  let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout[1]
+elseif type(g:fcharchar_timeout) == 4
+  let s:fcharchar_timeout_repeat  = g:fcharchar_timeout["repeat"]
+  let s:fcharchar_timeout_2ndchar = g:fcharchar_timeout["2ndchar"]
 endif
+
 let s:fcharchar_nr=char2nr(g:fcharchar_key)
 let s:fcharchar_nr2=char2nr(g:fcharchar_key2)
 
