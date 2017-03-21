@@ -24,7 +24,8 @@ let s:config = {
       \ [ -1, 'F', 'h', 'strridx' ],
     \ ],
   \ 'mode' : { 'v': 'gv', 'V': 'gv',  '': 'gv', 'n': ' ', 'o': ' ' },
-  \ 'posmark' : {'v': "'>", 'V': "'>",  '': "'>", 'n': ".", 'o': "." }
+  \ 'posmark' : {'v': "'>", 'V': "'>",  '': "'>", 'n': ".", 'o': "." },
+  \ 'postune' : {'v': 0, 'V': 0,  '': 0, 'n': 0, 'o': 1 },
   \}
 fu! s:readchar(...)
   " echom "Calling readchar ".join(a:000,',')
@@ -59,6 +60,8 @@ fu! s:fmotion(mode, direction, count, ...)
   let l:prefix = 'normal! ' . s:config.mode[a:mode]
   let [ l:delta, l:fc, l:mc, l:findex] = s:config.dir[!!a:direction]
   let l:posmark = s:config.posmark[a:mode]
+  let l:postune = s:config.postune[a:mode]                      "position tune for omap, one character diff
+  let l:postune_onechar = (a:direction)? 0:(l:postune)          "single character only need tune in forward direction
   let l:pos = col(l:posmark) - 1
   let l:c1 = 0
   let l:c2 = 0
@@ -79,11 +82,11 @@ fu! s:fmotion(mode, direction, count, ...)
   let l:c1num = len( split( l:line, l:c1, 1 ) ) - 1
   if l:c1num == 1
     let l:idx = stridx( l:line, l:c1, 0 )
-    if l:idx >= 0| execute l:prefix . (1+l:idx) . '|' | return | endif
+    if l:idx >= 0| execute l:prefix . (l:postune_onechar+1+l:idx) . '|' | return | endif
   endif
 
   if l:c2 == 0  | let l:c2 = s:readchar(s:fcharchar_timeout_2ndchar) | endif
-  if l:c2 == 27 | execute l:prefix . a:count . l:fc . l:c1 | return | endif
+  if l:c2 == 27 | execute l:prefix . (l:postune_onechar+a:count) . l:fc . l:c1 | return | endif
   let l:target = l:c1 . nr2char(l:c2)
   if a:0 == 0
     let s:motionsaved_exist=1
@@ -101,7 +104,7 @@ fu! s:fmotion(mode, direction, count, ...)
     let l:pp = l:idx + l:delta
   endwhile
   if l:idx >= 0
-    let l:idx = ( l:idx - l:pos ) * l:delta
+    let l:idx = ( l:idx - l:pos + l:postune ) * l:delta
     if l:idx > 0 | execute l:prefix . l:idx . l:mc | endif
   endif
   let s:motion_last_run_timestamp = reltime()
@@ -139,6 +142,10 @@ endif
 if !exists('g:fcharchar_key2')
   let g:fcharchar_key2 = toupper( g:fcharchar_key )
 endif
+" if !exists('g:fcharchar_position')
+"   " 0, 1, 2, 0 X 1 X 2, X stands for character 012 stands for position
+"   let g:fcharchar_position = 1
+" endif
 if !exists('g:fcharchar_timeout')
   let s:fcharchar_timeout_repeat  = 4.0
   let s:fcharchar_timeout_2ndchar = 2.0
