@@ -41,19 +41,13 @@ endf
 " str2float(reltimestr(reltime(reltime()))) =5.0e-6
 fu! s:fmotion_rbs(mode, direction, count, ...)
   let l:elapsed = str2float(reltimestr(reltime(s:motion_last_run_timestamp)))
-  let l:msg = ''
   if l:elapsed > s:fcharchar_timeout_repeat
-    let l:msg = 'Real motion'
-    " debug call('s:fmotion', a:000)
     call s:fmotion(a:mode, a:direction, a:count)
   elseif xor(a:direction, s:motionsaved_dir)
-    let l:msg = 'reversed replay'
     call s:replay(',')
   else
-    let l:msg = 'normal replay'
     call s:replay(';')
   endif
-  " echom printf("l:elapsed = %.6f s:fcharchar_timeout_repeat = %.6f, '%s' '%s'", l:elapsed, s:fcharchar_timeout_repeat, s:motionsaved_keys, l:msg)
 endf
 fu! s:fmotion(mode, direction, count, ...)
   if !has_key(s:config.mode, a:mode) | return | endif
