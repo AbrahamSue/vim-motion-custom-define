@@ -72,11 +72,13 @@ fu! s:fmotion(mode, direction, count, ...)
   if l:c1 == 0  | let l:c1 = s:readchar() | endif
   if l:c1 == 27 | return | else | let l:c1 = nr2char(l:c1) | endif
 
-  " l:c1num = strlen(substitute(l:line, '[^'.l:c1.']', '', 'g'))
-  let l:c1num = len( split( l:line, l:c1, 1 ) ) - 1
-  if l:c1num == 1
-    let l:idx = stridx( l:line, l:c1, 0 )
-    if l:idx >= 0| execute l:prefix . (l:postune_onechar+1+l:idx) . '|' | return | endif
+  if g:fcharchar_one_instance_go 
+    " l:c1num = strlen(substitute(l:line, '[^'.l:c1.']', '', 'g'))
+    let l:c1num = len( split( l:line, l:c1, 1 ) ) - 1
+    if l:c1num == 1
+      let l:idx = stridx( l:line, l:c1, 0 )
+      if l:idx >= 0| execute l:prefix . (l:postune_onechar+1+l:idx) . '|' | return | endif
+    endif
   endif
 
   if l:c2 == 0  | let l:c2 = s:readchar(s:fcharchar_timeout_2ndchar) | endif
@@ -140,6 +142,9 @@ endif
 "   " 0, 1, 2, 0 X 1 X 2, X stands for character 012 stands for position
 "   let g:fcharchar_position = 1
 " endif
+if !exists('g:fcharchar_one_instance_go')
+  let g:fcharchar_one_instance_go = 0
+endif
 if !exists('g:fcharchar_timeout')
   let s:fcharchar_timeout_repeat  = 4.0
   let s:fcharchar_timeout_2ndchar = 2.0
@@ -236,9 +241,12 @@ function! s:operator_param_motion(motion_wise, ...)
 
 "  let l:safe_text = substitute(@@, " ", "\\ ", "g") | echom printf(fmt, l:safe_text) | execute printf(fmt, l:safe_text)
   " execute printf(fmt, @@)
+  " escape ' " firstly, and then escape \\ including the previous escape
+  " generated \\
+  let l:sel = escape(escape(@@, '''"'), '\\')
+  let l:cmd = substitute(l:cmd, "<crq>", "\<cr>", "g")
   let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
-  let l:cmd = substitute(l:cmd, "<SEL>", escape(@@, '''\\"'), "g")
-  echom l:cmd
+  let l:cmd = substitute(l:cmd, "<SEL>", l:sel, "g")
   execute l:cmd
   let &selection = sel_save | let @@ = reg_save
 endfunction
