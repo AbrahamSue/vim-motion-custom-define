@@ -222,7 +222,20 @@ function! OperatorGeneralMotion(motion_wise, ...)
   execute printf(fmt, @@)
   let &selection = sel_save | let @@ = reg_save
 endfunction
-function! s:operator_param_motion(motion_wise, ...)
+function! s:escape_cmd(icount, iregister, icmd, isel)
+  " escape ' " firstly, and then escape \\ including the previous escape
+  " generated \\
+  let l:sel = escape(escape(a:isel, '''"'), '\\')
+  let l:sel = substitute(l:sel, "\_n", "\_.", "g")
+  let l:cmd = substitute(a:icmd, "<crq>", "\<cr>", "g")
+  let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
+  let l:cmd = substitute(l:cmd, "<count>", a:icount?a:icount:"", "g")
+  let l:cmd = substitute(l:cmd, "<register>", a:iregister, "g")
+  let l:cmd = substitute(l:cmd, "<SEL>", l:sel, "g")
+  " echom 'icount=' . a:icount . ' iregister=' . a:iregister . ' icmd=' . a:icmd . ' isel=' . a:isel. ' l:sel=' .l:sel. ' l:cmd=' .l:cmd
+  return l:cmd
+endfunction
+function! s:operator_param_motion(...)
   let sel_save = &selection | let &selection = "inclusive" | let reg_save = @@
 "   echomsg "motion_wise = " . a:motion_wise
 "   echomsg "a:0 = " . a:0
@@ -234,39 +247,30 @@ function! s:operator_param_motion(motion_wise, ...)
   " visual mode V,      motion_wise = V,    a:0 = 1, a:1 = "Ack! %s"
   " visual mode <C-v>,  motion_wise = ,    a:0 = 1, a:1 = "Ack! %s"
 
-  if a:0 | silent exe "normal! gvy" | let l:cmd = a:1
-  elseif a:motion_wise == 'V' | silent exe "normal! '[V']y" | let l:cmd = a:1
-  else | silent exe "normal! `[v`]y" | let l:cmd = g:operator_commands
+  let l:errmsg = "ERR10099: operator_param_montion called with 0 parameter. Should 1 or more"
+  if    !a:0           | echom l:errmsg              | return
+  elseif a:1 == 'char' | silent exe "normal! `[v`]y" | let [l:count, l:register, l:cmd] = g:operator_commands
+  elseif a:1 == 'V'    | silent exe "normal! '[V']y" | let [l:count, l:register, l:cmd] = a:000[1:]
+  else                 | silent exe "normal! gvy"    | let [l:count, l:register, l:cmd] = a:000[1:]
   endif
-
-"  let l:safe_text = substitute(@@, " ", "\\ ", "g") | echom printf(fmt, l:safe_text) | execute printf(fmt, l:safe_text)
-  " execute printf(fmt, @@)
-  " escape ' " firstly, and then escape \\ including the previous escape
-  " generated \\
-  let l:sel = escape(escape(@@, '''"'), '\\')
-  let l:cmd = substitute(l:cmd, "<crq>", "\<cr>", "g")
-  let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
-  let l:cmd = substitute(l:cmd, "<SEL>", l:sel, "g")
-  execute l:cmd
+  execute s:escape_cmd(l:count, l:register, l:cmd, @@)
   let &selection = sel_save | let @@ = reg_save
 endfunction
-function! s:operator_range_command(motion_wise, ...)
-  if a:0 | silent exe "normal! gv<cr>" | let l:cmd = a:1
-  elseif a:motion_wise == 'V' | silent exe "normal! '[V']<cr>" | let l:cmd = a:1
-  else | silent exe "normal! `[v`]<cr>" | let l:cmd = g:operator_commands
+function! s:operator_range_command(...)
+  let l:errmsg = "ERR10099: operator_range_montion called with 0 parameter. Should 1 or more"
+  if    !a:0           | echom l:errmsg              | return
+  elseif a:1 == 'char' | let l:range = "'[,']"       | let [l:count, l:register, l:cmd] = g:operator_commands
+  else                 | let l:range = "'<,'>"       | let [l:count, l:register, l:cmd] = a:000[1:]
   endif
-
-  let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
-  let l:cmd = substitute(l:cmd, "<SEL>", escape(@@, '''\\"'), "g")
-  execute "'[,']" l:cmd
+  execute l:range . s:escape_cmd(l:count, l:register, l:cmd, "")
 endfunction
 function! s:operator_define(keyseq, func_name, cmd)
   " echom printf(('nnoremap <script> <silent> %s :set opfunc=%s<cr>:let g:operator_commands=''%s''<cr>g@'),
   "   \              a:keyseq, a:func_name, a:000)
   let l:cmd = substitute(a:cmd, "|", "<bar>", "g")
-  execute printf(('nnoremap <script> <silent> %s :set opfunc=%s<cr>:let g:operator_commands=''%s''<cr>g@'),
-    \              a:keyseq, a:func_name, l:cmd)
-  execute printf(('vnoremap <script> <silent> %s :<C-u>call %s(visualmode(), ''%s'')<cr>'),
+  execute printf(('nnoremap <script> <silent> %s :<C-u>let g:operator_commands=[v:count,v:register,''%s'']<cr>:set opfunc=%s<cr>g@'),
+    \              a:keyseq, l:cmd, a:func_name)
+  execute printf(('vnoremap <script> <silent> %s :<C-u>call %s(visualmode(), v:count,v:register, ''%s'')<cr>'),
     \              a:keyseq, a:func_name, l:cmd)
   execute printf('onoremap %s  g@', a:keyseq)
 endfunction
