@@ -227,11 +227,17 @@ function! s:escape_cmd(icount, iregister, icmd, isel)
   " generated \\
   let l:sel = escape(escape(a:isel, '''"'), '\\')
   let l:sel = substitute(l:sel, "\_n", "\_.", "g")
-  let l:cmd = substitute(a:icmd, "<crq>", "\<cr>", "g")
+  let l:cmd = substitute(a:icmd, "<cr-q>", "<cr>", "g")
   let l:cmd = substitute(l:cmd, "<bar>", "|", "g")
   let l:cmd = substitute(l:cmd, "<count>", a:icount?a:icount:"", "g")
   let l:cmd = substitute(l:cmd, "<register>", a:iregister, "g")
   let l:cmd = substitute(l:cmd, "<SEL>", l:sel, "g")
+  let l:cmd = substitute(l:cmd, "<SEL-q>", "'".l:sel."'", "g")
+  let l:cmd = substitute(l:cmd, "<q>", "'", "g")
+  let l:cmd = substitute(l:cmd, "<qq>", '"', "g")
+  let l:cmd = substitute(l:cmd, "<bs>",  '\\', "g")
+  let l:cmd = substitute(l:cmd, "<bs1>", '\\', "g")
+  let l:cmd = substitute(l:cmd, "<bs2>", '\\\\', "g")
   " echom 'icount=' . a:icount . ' iregister=' . a:iregister . ' icmd=' . a:icmd . ' isel=' . a:isel. ' l:sel=' .l:sel. ' l:cmd=' .l:cmd
   return l:cmd
 endfunction
@@ -253,7 +259,10 @@ function! s:operator_param_motion(...)
   elseif a:1 == 'V'    | silent exe "normal! '[V']y" | let [l:count, l:register, l:cmd] = a:000[1:]
   else                 | silent exe "normal! gvy"    | let [l:count, l:register, l:cmd] = a:000[1:]
   endif
-  execute s:escape_cmd(l:count, l:register, l:cmd, @@)
+  " execute s:escape_cmd(l:count, l:register, l:cmd, @@)
+  let g:operator_last_cmd = s:escape_cmd(l:count, l:register, l:cmd, @@)
+  execute g:operator_last_cmd
+  echom g:operator_last_cmd
   let &selection = sel_save | let @@ = reg_save
 endfunction
 function! s:operator_range_command(...)
@@ -262,6 +271,7 @@ function! s:operator_range_command(...)
   elseif a:1 == 'char' | let l:range = "'[,']"       | let [l:count, l:register, l:cmd] = g:operator_commands
   else                 | let l:range = "'<,'>"       | let [l:count, l:register, l:cmd] = a:000[1:]
   endif
+  echom   l:range . s:escape_cmd(l:count, l:register, l:cmd, "")
   execute l:range . s:escape_cmd(l:count, l:register, l:cmd, "")
 endfunction
 function! s:operator_define(keyseq, func_name, cmd)
