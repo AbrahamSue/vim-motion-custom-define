@@ -237,8 +237,6 @@ function! s:escape_cmd(icount, iregister, icmd, isel)
   let l:cmd = substitute(l:cmd, "<SEL>", l:sel, "g")
   let l:cmd = substitute(l:cmd, "<SEL-q>", "'".l:sel."'", "g")
   let l:cmd = substitute(l:cmd, "<SEL-Q>", '"'.l:sel.'"', "g")
-
-
   let l:cmd = substitute(l:cmd, "<q>", "'", "g")
   let l:cmd = substitute(l:cmd, "<qq>", '"', "g")
   let l:cmd = substitute(l:cmd, "<bs>",  '\\', "g")
